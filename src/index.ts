@@ -1,2 +1,7 @@
-import { PrismaClient } from "./generated/prisma";
-const prisma = new PrismaClient()
+import app from "./app";
+
+const port = 8080
+
+app.listen(port, ()=>{
+    console.log(`server is running on ${port}`)
+})
