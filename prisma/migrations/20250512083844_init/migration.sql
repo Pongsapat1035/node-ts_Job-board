@@ -1,14 +1,5 @@
-/*
-  Warnings:
-
-  - You are about to drop the `Profile` table. If the table is not empty, all the data it contains will be lost.
-
-*/
 -- CreateEnum
 CREATE TYPE "Role" AS ENUM ('COMPANY', 'USER', 'ADMIN');
-
--- DropTable
-DROP TABLE "Profile";
 
 -- CreateTable
 CREATE TABLE "Auth" (

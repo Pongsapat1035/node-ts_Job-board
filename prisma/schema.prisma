@@ -40,9 +40,9 @@ model Company {
 }
 
 enum Role {
-  COMPANY
-  USER
-  ADMIN
+  company
+  user
+  admin
 }
 
 
