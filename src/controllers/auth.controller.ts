@@ -1,10 +1,8 @@
 import { PrismaClient } from "../generated/prisma";
 import { validateRegister } from "../utils/auth.validate";
 import { Request, Response } from "express";
-import bcrypt from 'bcrypt'
 import { getJwt } from "../utils/jwt";
-
-const saltRounds = 10
+import { getHashedPassword, comparePassword } from "../utils/password";
 
 const prisma = new PrismaClient()
 
@@ -21,7 +19,7 @@ export const loginHanler = async (req: Request, res: Response) => {
         if (!user) throw new Error("User does not exist !")
 
         const hashedPassword = user.password
-        const checkPassword = await bcrypt.compare(password, hashedPassword);
+        const checkPassword = await comparePassword(password, hashedPassword)
 
         if (!checkPassword) throw new Error("Password does not match")
 
@@ -49,7 +47,7 @@ export const registerHanler = async (req: Request, res: Response) => {
         })
 
         if (user) throw new Error("User is already exist")
-        const hashedPassword = await bcrypt.hash(password, saltRounds)
+        const hashedPassword = await getHashedPassword(password)
 
         const response = await prisma.auth.create({
             data: {
@@ -60,12 +58,22 @@ export const registerHanler = async (req: Request, res: Response) => {
         })
 
         const userId = response.id
-        await prisma.user.create({
-            data: {
-                authId: userId,
-                name
-            }
-        })
+        if (role === 'user') {
+            await prisma.user.create({
+                data: {
+                    authId: userId,
+                    name
+                }
+            })
+        } else {
+            await prisma.company.create({
+                data: {
+                    authId: userId,
+                    name
+                }
+            })
+        }
+
 
         const token = getJwt({ email, role })
         res.status(200).json({ token })

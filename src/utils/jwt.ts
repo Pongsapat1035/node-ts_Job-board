@@ -15,3 +15,7 @@ export const getJwt = (data: userData): string => {
   return token;
 };
 
+export const validateToken =  (token: string)  => {
+  const decoded = jwt.verify(token, process.env.JWT_PRIVATE_KEY || "secret") ;
+  return decoded
+};
