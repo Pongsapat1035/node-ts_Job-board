@@ -5,7 +5,7 @@ import type { Role } from "../types";
 
 dotenv.config({ path: path.resolve(__dirname, "../../.env") });
 
-type userData = { email: string, role: Role };
+type userData = { email: string, role: Role, userId:number };
 
 export const getJwt = (data: userData): string => {
   const privateKey: string = process.env.JWT_PRIVATE_KEY || "secret";

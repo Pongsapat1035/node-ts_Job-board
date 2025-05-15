@@ -2,7 +2,7 @@ import { NextFunction, Request, Response } from "express";
 import { validateToken } from "../utils/jwt";
 import type { Role } from "../types";
 
-type UserData = { email: string, role: Role }
+type UserData = { email: string, role: Role, userId:number }
 
 declare global {
   namespace Express {
@@ -32,13 +32,13 @@ export const checkAuth = (req: Request, res: Response, next: NextFunction) => {
     
     const requestPath = req.path
     const role = decoded.role
-   
+    console.log(`path : ${requestPath} / role : ${role}`)
     const checkRole = checkRoleAccess(role, requestPath)
-    
+    console.log('validate role : ', checkRole)
     if (!checkRole) {
       return res.status(403).json({ message: 'Forbidden' });
     }
-    
+    req.user = decoded
     return next();
   } catch (error) {
     console.log(error)

@@ -22,8 +22,8 @@ export const loginHanler = async (req: Request, res: Response) => {
         const checkPassword = await comparePassword(password, hashedPassword)
 
         if (!checkPassword) throw new Error("Password does not match")
-
-        const token = getJwt({ email, role })
+            const userId = user.id
+        const token = getJwt({ email, role, userId })
         res.status(200).json({ token })
 
     } catch (error) {
@@ -75,7 +75,7 @@ export const registerHanler = async (req: Request, res: Response) => {
         }
 
 
-        const token = getJwt({ email, role })
+        const token = getJwt({ email, role, userId })
         res.status(200).json({ token })
 
     } catch (error) {
