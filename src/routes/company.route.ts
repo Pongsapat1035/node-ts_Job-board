@@ -6,11 +6,10 @@ const router = express.Router()
 router.get("/profile", getProfileHanler)
 router.patch("/profile", updateProfileHanler)
 
-router.post("/job", createJobHanler)
 router.get("/jobs", getAllJobsHanler)
 router.get("/job/:id", getJobHanler)
+router.post("/job", createJobHanler)
 router.patch("/job/:id", updateJobHanler)
 router.delete("/job/:id", deleteJobHanler)
-
 
 export default router

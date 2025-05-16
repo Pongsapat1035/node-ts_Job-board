@@ -26,7 +26,7 @@ const checkRoleAccess = (role: keyof typeof accessControl, path: string): boolea
 export const checkAuth = (req: Request, res: Response, next: NextFunction) => {
   try {
     const authToken: string = req.headers.authorization?.split(" ")[1] || "";
-    if (authToken === "") throw new Error("User not login");
+    if (authToken === "") return res.status(401).json({ message: "Missing or invalid JWT" })
 
     const decoded = validateToken(authToken) as UserData;
     
@@ -44,10 +44,7 @@ export const checkAuth = (req: Request, res: Response, next: NextFunction) => {
     console.log('error from middleware : ', error)
     if (error instanceof Error) {
       const errorMsg = error.message
-      if (errorMsg === "don't have permission") {
-        return res.status(403).json({ message: "You don't have permission to access" })
-      }
-      return res.status(401).json({ message: "Unauthorized: User not logged in" });
+      return res.status(500).json({ message: errorMsg });
     }
 
   }

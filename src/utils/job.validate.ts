@@ -19,7 +19,7 @@ export const validateJobForm = (data: any) => {
 
     } catch (error) {
         if (error instanceof Error) {
-            throw new Error(error.message)
+            throw new Error("input error : " + error.message)
         }
     }
 }

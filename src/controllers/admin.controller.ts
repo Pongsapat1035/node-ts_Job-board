@@ -33,7 +33,8 @@ export const loadUserDetail = async (req: Request, res: Response) => {
         const { id } = req.params
 
         const response = await findUserWithId(parseInt(id))
-        const userRole = response?.role
+        if (!response) return res.status(404).json({ message: "user not found" })
+        const userRole = response.role
         let userInfo = {}
 
         if (userRole === 'user') {
@@ -61,7 +62,10 @@ export const loadUserDetail = async (req: Request, res: Response) => {
 
         res.status(200).json({ data: result })
     } catch (error) {
-        console.log(error)
+        console.log("load user detail error : ", error)
+        if (error instanceof Error) {
+            res.status(500).json({ message: error.message })
+        }
     }
 }
 
@@ -70,7 +74,7 @@ export const deleteHanler = async (req: Request, res: Response) => {
         const { id } = req.params
 
         const response = await findUserWithId(parseInt(id))
-        if (!response) throw new Error('user not found')
+        if (!response) return res.status(404).json({ message: "user not found" })
 
         const userId = response.id
         const userRole = response.role
@@ -87,15 +91,14 @@ export const deleteHanler = async (req: Request, res: Response) => {
                 }
             })
         }
-        await prisma.auth.delete({
-            where: {
-                id: userId,
-            },
-        })
+        await prisma.auth.delete({ where: { id: userId, } })
 
         res.status(200).json({ message: "delete user success !", data: response })
     } catch (error) {
         console.log('delete user error : ', error)
+        if (error instanceof Error) {
+            res.status(500).json({ message: error.message })
+        }
     }
 }
 
@@ -103,25 +106,19 @@ export const updateUserDetail = async (req: Request, res: Response) => {
     try {
         const { id } = req.params
         const { role } = req.body
-        if (validateRole(role)) {
-            throw new Error("incorrect Role")
-        }
+        if (validateRole(role)) res.status(400).json({ message: "incorrect Role" })
+
         const response = await prisma.auth.update({
-            where: {
-                id: parseInt(id)
-            }, data: {
-                role
-            }
+            where: { id: parseInt(id) },
+            data: { role }
         })
-        res.status(200).json({ message: "update role success!", newData : response })
+        res.status(200).json({ message: "update role success!", newData: response })
 
     } catch (error) {
         console.log('update role error : ', error)
         if (error instanceof Error) {
-            const errMsg = error.message
-            res.status(400).json({ message: errMsg })
+            res.status(500).json({ message: error.message })
         }
-
     }
 }
 

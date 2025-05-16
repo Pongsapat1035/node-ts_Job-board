@@ -3,6 +3,7 @@ import bodyParser from "body-parser"
 import authRoute from './routes/auth.route'
 import adminRoute from './routes/admin.route'
 import companyRoute from './routes/company.route'
+import userRoute from './routes/user.route'
 import { checkAuth } from "./middleware/middleware"
 
 const app = express()
@@ -19,5 +20,6 @@ app.use((req, res, next) => {
 app.use("/auth", authRoute)
 app.use("/admin", adminRoute)
 app.use("/company", companyRoute)
+app.use("/user", userRoute)
 
 export default app;

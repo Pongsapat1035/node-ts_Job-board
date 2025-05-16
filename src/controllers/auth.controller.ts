@@ -1,6 +1,6 @@
+import { Request, Response } from "express";
 import { PrismaClient } from "../generated/prisma";
 import { validateRegister } from "../utils/auth.validate";
-import { Request, Response } from "express";
 import { getJwt } from "../utils/jwt";
 import { getHashedPassword, comparePassword } from "../utils/password";
 
@@ -16,13 +16,13 @@ export const loginHanler = async (req: Request, res: Response) => {
             },
         })
 
-        if (!user) throw new Error("User does not exist !")
+        if (!user) return res.status(404).json({ message: "User is not found" })
 
         const hashedPassword = user.password
         const checkPassword = await comparePassword(password, hashedPassword)
 
-        if (!checkPassword) throw new Error("Password does not match")
-            const userId = user.id
+        if (!checkPassword)  return res.status(400).json({ message: "Password does not match" })
+        const userId = user.id
         const token = getJwt({ email, role, userId })
         res.status(200).json({ token })
 
@@ -40,13 +40,9 @@ export const registerHanler = async (req: Request, res: Response) => {
         validateRegister(userData)
         const { email, password, name, role } = userData
 
-        const user = await prisma.auth.findUnique({
-            where: {
-                email,
-            },
-        })
+        const user = await prisma.auth.findUnique({ where: { email } })
 
-        if (user) throw new Error("User is already exist")
+        if (user) return res.status(409).json({ message: "User is already exist" })
         const hashedPassword = await getHashedPassword(password)
 
         const response = await prisma.auth.create({
@@ -65,7 +61,7 @@ export const registerHanler = async (req: Request, res: Response) => {
                     name
                 }
             })
-        } else {
+        } else if (role === 'company') {
             await prisma.company.create({
                 data: {
                     authId: userId,
@@ -74,15 +70,15 @@ export const registerHanler = async (req: Request, res: Response) => {
             })
         }
 
-
         const token = getJwt({ email, role, userId })
         res.status(200).json({ token })
 
     } catch (error) {
         console.log(error)
         if (error instanceof Error) {
-            res.status(400).json({ error: error.message })
+            const errorMsg = error.message
+            const code = errorMsg.includes('input error') ? 400 : 500
+            res.status(code).json({ error: error.message })
         }
-
     }
 }

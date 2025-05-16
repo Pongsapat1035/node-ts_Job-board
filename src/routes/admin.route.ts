@@ -9,5 +9,4 @@ router.get('/user/:id', loadUserDetail)
 router.patch('/user/:id', updateUserDetail)
 router.delete('/user/:id', deleteHanler)
 
-
 export default router

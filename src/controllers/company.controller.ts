@@ -1,7 +1,8 @@
-import { PrismaClient } from "../generated/prisma";
 import { Request, Response } from "express";
+import { PrismaClient } from "../generated/prisma";
 import { validateString } from "../utils/validation";
 import { validateJobForm, getAllowedField } from "../utils/job.validate";
+
 const prisma = new PrismaClient
 
 export const getProfileHanler = async (req: Request, res: Response) => {
@@ -12,6 +13,8 @@ export const getProfileHanler = async (req: Request, res: Response) => {
                 authId: id
             }
         })
+        if (!response) return res.status(404).json({ message: "user does not exist" })
+
         res.json({ data: response })
     } catch (error) {
         console.log('get profile detail error : ', error)
@@ -41,7 +44,9 @@ export const updateProfileHanler = async (req: Request, res: Response) => {
     } catch (error) {
         console.log(error)
         if (error instanceof Error) {
-            res.status(400).json({ message: error.message })
+            const errorMsg = error.message
+            const code = errorMsg.includes('incorrect input') ? 400 : 500
+            res.status(code).json({ error: error.message })
         }
     }
 }
@@ -64,11 +69,14 @@ export const createJobHanler = async (req: Request, res: Response) => {
                 status: true
             }
         })
+
         res.status(200).json({ message: "create job post success !", response })
     } catch (error) {
         console.log('error create job : ', error)
         if (error instanceof Error) {
-            res.status(400).json({ message: error.message })
+            const errorMsg = error.message
+            const code = errorMsg.includes('incorrect input') ? 400 : 500
+            res.status(code).json({ error: error.message })
         }
     }
 }
@@ -86,7 +94,7 @@ export const getAllJobsHanler = async (req: Request, res: Response) => {
     } catch (error) {
         console.log('error load jobs : ', error)
         if (error instanceof Error) {
-            res.status(400).json({ message: error.message })
+            res.status(500).json({ message: error.message })
         }
     }
 }
@@ -99,18 +107,28 @@ export const getJobHanler = async (req: Request, res: Response) => {
             where: {
                 id: parseInt(id),
                 companyId: userId
+            }, select: {
+                id: true,
+                title: true,
+                description: true,
+                tags: true,
+                minSalary: true,
+                maxSalary: true,
+                status: true,
+                applicant: {
+                    select: {
+                        title: true
+                    }
+                }
             }
         })
-        if (!response) {
-            res.status(403).json({ message: "Forbiden" })
-        }
-        // load applicant 
+        if (!response) res.status(404).json({ message: "Job not found" })
 
         res.status(200).json({ data: response })
     } catch (error) {
         console.log('error load jobs : ', error)
         if (error instanceof Error) {
-            res.status(400).json({ message: error.message })
+            res.status(500).json({ message: error.message })
         }
     }
 }
@@ -130,7 +148,7 @@ export const updateJobHanler = async (req: Request, res: Response) => {
     } catch (error) {
         console.log('error update job : ', error)
         if (error instanceof Error) {
-            res.status(400).json({ message: error.message })
+            res.status(500).json({ message: error.message })
         }
     }
 }
@@ -139,21 +157,21 @@ export const deleteJobHanler = async (req: Request, res: Response) => {
     try {
         const userId = req.user?.userId
         const { id } = req.params
+
         const response = await prisma.job.delete({
             where: {
                 id: parseInt(id),
                 companyId: userId
             }
         })
-        if (!response) {
-            res.status(403).json({ message: "Not found job" })
-        }
+
+        if (!response) res.status(404).json({ message: "Not found job" })
 
         res.status(200).json({ message: "Delete job success", data: response })
     } catch (error) {
         console.log('error delete job : ', error)
         if (error instanceof Error) {
-            res.status(400).json({ message: error.message })
+            res.status(500).json({ message: error.message })
         }
     }
 }
