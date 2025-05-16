@@ -32,16 +32,16 @@ export const checkAuth = (req: Request, res: Response, next: NextFunction) => {
     
     const requestPath = req.path
     const role = decoded.role
-    console.log(`path : ${requestPath} / role : ${role}`)
+    
     const checkRole = checkRoleAccess(role, requestPath)
-    console.log('validate role : ', checkRole)
-    if (!checkRole) {
-      return res.status(403).json({ message: 'Forbidden' });
-    }
+    
+    if (!checkRole) return res.status(403).json({ message: 'Forbidden' });
+    
     req.user = decoded
     return next();
+
   } catch (error) {
-    console.log(error)
+    console.log('error from middleware : ', error)
     if (error instanceof Error) {
       const errorMsg = error.message
       if (errorMsg === "don't have permission") {

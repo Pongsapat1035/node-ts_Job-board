@@ -1,5 +1,5 @@
 import express from 'express'
-import { getProfileHanler, updateProfileHanler, createJobHanler } from '../controllers/company.controller'
+import { getProfileHanler, updateProfileHanler, createJobHanler, getAllJobsHanler, getJobHanler, deleteJobHanler, updateJobHanler } from '../controllers/company.controller'
 
 const router = express.Router()
 
@@ -7,5 +7,10 @@ router.get("/profile", getProfileHanler)
 router.patch("/profile", updateProfileHanler)
 
 router.post("/job", createJobHanler)
+router.get("/jobs", getAllJobsHanler)
+router.get("/job/:id", getJobHanler)
+router.patch("/job/:id", updateJobHanler)
+router.delete("/job/:id", deleteJobHanler)
+
 
 export default router

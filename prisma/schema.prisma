@@ -22,6 +22,7 @@ model Auth {
   role Role
   user User?
   company Company?
+  Job Job[]
 }
 
 model User {
@@ -38,7 +39,6 @@ model Company {
   authId Int @unique
   name String
   description String?
-  Job Job[]
 }
 
 enum Role {
@@ -49,7 +49,7 @@ enum Role {
 
 model Job {
   id Int @id @default(autoincrement())
-  company Company @relation(fields: [companyId], references: [id])
+  company Auth @relation(fields: [companyId], references: [id])
   companyId Int 
   title String
   description String

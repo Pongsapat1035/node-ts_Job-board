@@ -40,6 +40,17 @@ export const validateString = (text: string): string | null => {
     return null
 }
 
+export const validaetNumber = (number: string): string | null => {
+    const numberFormat = z.number({ message: "Wrong type" }).min(0, { message: "can't less than 0" })
+    const result = numberFormat.safeParse(number)
+
+    if (!result.success) {
+        const errMsg = result.error.issues[0].message
+        return errMsg
+    }
+    return null
+}
+
 export const validateRole = (role:string): string | null => {
     const roleFormat = z.nativeEnum(Role)
     const result = roleFormat.safeParse(role)
