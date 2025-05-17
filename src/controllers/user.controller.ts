@@ -11,12 +11,29 @@ export const createApplicantHanler = async (req: Request, res: Response) => {
         validateApplicantForm(userInputData)
 
         const userData = await prisma.auth.findUnique({ where: { id: userId } })
-        if (!userData) return res.status(404).json({ message: "User does not exist" })
+        if (!userData) {
+            res.status(404).json({ message: "User does not exist" })
+            return
+        }
 
         const { title, description, jobId } = userInputData
 
         const jobData = await prisma.job.findUnique({ where: { id: jobId } })
-        if (!jobData) return res.status(404).json({ message: "Job does not exist" })
+        if (!jobData) {
+            res.status(404).json({ message: "Job does not exist" })
+            return
+        }
+
+        const checkApplicant = await prisma.applicant.findFirst({
+            where: {
+                jobId: jobData.id,
+                userId: userData.id,
+            }
+        })
+        if (checkApplicant) {
+            res.status(409).json({ message: "applicant is already exits" })
+            return
+        }
 
         const response = await prisma.applicant.create({
             data: {
@@ -57,7 +74,10 @@ export const getJobHanler = async (req: Request, res: Response) => {
     try {
         const { id } = req.params
         const response = await prisma.job.findUnique({ where: { id: parseInt(id) } })
-        if (!response) return res.status(404).json({ message: "Job does not exist" })
+        if (!response) {
+            res.status(404).json({ message: "Job does not exist" })
+            return
+        }
         res.status(200).json({ data: response })
     } catch (error) {
         console.log('create applicant error : ', error)
@@ -83,8 +103,15 @@ export const getAllApplicantsHanler = async (req: Request, res: Response) => {
 export const getApplicantHanler = async (req: Request, res: Response) => {
     try {
         const { id } = req.params
+        const applicantId = parseInt(id);
+
+        if (isNaN(applicantId)) {
+            res.status(400).json({ message: "Invalid applicant id" });
+            return
+        }
+
         const response = await prisma.applicant.findUnique({
-            where: { id: parseInt(id) },
+            where: { id: applicantId },
             select: {
                 id: true,
                 title: true,
@@ -92,7 +119,10 @@ export const getApplicantHanler = async (req: Request, res: Response) => {
                 job: true
             }
         })
-        if (!response) return res.status(404).json({ message: "Applicant does not exist" })
+        if (!response) {
+            res.status(404).json({ message: "Applicant does not exist" })
+            return
+        }
 
         res.status(200).json({ data: response })
     } catch (error) {
@@ -106,7 +136,13 @@ export const getApplicantHanler = async (req: Request, res: Response) => {
 export const deleteAplicantHanler = async (req: Request, res: Response) => {
     try {
         const { id } = req.params
-        const response = await prisma.applicant.delete({ where: { id: parseInt(id) } })
+        const recievedId = parseInt(id)
+        if (isNaN(recievedId)) {
+            res.status(400).json({ message: "Invalid user id" });
+            return
+        }
+
+        const response = await prisma.applicant.delete({ where: { id: recievedId } })
         res.status(200).json({ message: "delete success", data: response })
     } catch (error) {
         console.log('create applicant error : ', error)
@@ -127,7 +163,10 @@ export const getBookmarkListHanler = async (req: Request, res: Response) => {
                 job: true
             }
         })
-        if (!response) return res.status(404).json({ message: "Bookmark does not exist" })
+        if (!response) {
+            res.status(404).json({ message: "Bookmark does not exist" })
+            return
+        }
 
         res.status(200).json({ message: "load bookmark list success", data: response })
     } catch (error) {
@@ -147,7 +186,10 @@ export const addBookmarkHanler = async (req: Request, res: Response) => {
                 userId: parseInt(userId)
             }
         })
-        if (bookmarkData) res.status(409).json({ message: "this job is already exist" })
+        if (bookmarkData) {
+            res.status(409).json({ message: "this job is already exist" })
+            return
+        }
 
         const response = await prisma.bookmark.create({
             data: {
@@ -167,15 +209,25 @@ export const addBookmarkHanler = async (req: Request, res: Response) => {
 export const removeBookmarkHanler = async (req: Request, res: Response) => {
     try {
         const { id } = req.params
+        const recievedId = parseInt(id)
+        if (isNaN(recievedId)) {
+            res.status(400).json({ message: "Invalid user id" });
+            return
+        }
+        
         const response = await prisma.bookmark.delete({
             where: {
-                id: parseInt(id)
+                id: recievedId
             }
         })
         res.status(200).json({ message: "remove bookmark success", data: response })
     } catch (error) {
         console.log('create applicant error : ', error)
         if (error instanceof Error) {
+            const errorMsg = error.message
+            if(errorMsg.includes("Record to delete does not exist")) {
+                res.status(404).json({ message: "Record not found" })
+            }
             res.status(500).json({ message: error.message })
         }
     }

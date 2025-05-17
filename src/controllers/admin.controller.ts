@@ -8,6 +8,12 @@ const findUserWithId = async (id: number) => {
     const response = await prisma.auth.findUnique({
         where: {
             id: id
+        },
+        select: {
+            id: true,
+            email: true,
+            role: true,
+            createAt: true
         }
     })
     return response
@@ -31,9 +37,18 @@ export const loadUserHanler = async (req: Request, res: Response) => {
 export const loadUserDetail = async (req: Request, res: Response) => {
     try {
         const { id } = req.params
+        const userId = parseInt(id);
+
+        if (isNaN(userId)) {
+            res.status(400).json({ message: "Invalid user id" });
+            return
+        }
 
         const response = await findUserWithId(parseInt(id))
-        if (!response) return res.status(404).json({ message: "user not found" })
+        if (!response) {
+            res.status(404).json({ message: "user not found" })
+            return
+        }
         const userRole = response.role
         let userInfo = {}
 
@@ -69,28 +84,38 @@ export const loadUserDetail = async (req: Request, res: Response) => {
     }
 }
 
+const clearRecord = async (id: number, role: string) => {
+    if (role === 'user') {
+        await prisma.user.delete({ where: { authId: id } })
+        await prisma.applicant.deleteMany({ where: { id } })
+        await prisma.bookmark.deleteMany({ where: { id } })
+    }
+    else if (role === 'company') {
+        await prisma.company.delete({ where: { authId: id } })
+        await prisma.job.deleteMany({ where: { companyId: id } })
+    }
+}
+
 export const deleteHanler = async (req: Request, res: Response) => {
     try {
         const { id } = req.params
+        const recievedId = parseInt(id);
 
-        const response = await findUserWithId(parseInt(id))
-        if (!response) return res.status(404).json({ message: "user not found" })
+        if (isNaN(recievedId)) {
+            res.status(400).json({ message: "Invalid user id" });
+            return
+        }
+
+        const response = await findUserWithId(recievedId)
+        if (!response) {
+            res.status(404).json({ message: "user not found" })
+            return
+        }
 
         const userId = response.id
         const userRole = response.role
-        if (userRole === 'user') {
-            await prisma.user.delete({
-                where: {
-                    authId: userId
-                }
-            })
-        } else if (userRole === 'company') {
-            await prisma.company.delete({
-                where: {
-                    authId: userId
-                }
-            })
-        }
+
+        await clearRecord(userId, userRole)
         await prisma.auth.delete({ where: { id: userId, } })
 
         res.status(200).json({ message: "delete user success !", data: response })
@@ -106,18 +131,33 @@ export const updateUserDetail = async (req: Request, res: Response) => {
     try {
         const { id } = req.params
         const { role } = req.body
-        if (validateRole(role)) res.status(400).json({ message: "incorrect Role" })
+        const userId = parseInt(id);
+
+        if (isNaN(userId)) {
+            res.status(400).json({ message: "Invalid user id" });
+            return
+        }
+
+        if (validateRole(role)) {
+            res.status(400).json({ message: "incorrect Role" })
+            return
+        }
 
         const response = await prisma.auth.update({
             where: { id: parseInt(id) },
             data: { role }
         })
+
         res.status(200).json({ message: "update role success!", newData: response })
 
     } catch (error) {
         console.log('update role error : ', error)
         if (error instanceof Error) {
-            res.status(500).json({ message: error.message })
+            const errorMsg = error.message
+            if (errorMsg.includes("Record to update not found")) {
+                res.status(404).json({ message: "User not found" })
+            }
+            res.status(500).json({ message: errorMsg })
         }
     }
 }

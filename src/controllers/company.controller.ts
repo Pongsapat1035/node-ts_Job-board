@@ -7,13 +7,17 @@ const prisma = new PrismaClient
 
 export const getProfileHanler = async (req: Request, res: Response) => {
     try {
-        const id = req.user?.userId
+        const id = (req.user?.userId ?? 0)
+
         const response = await prisma.company.findUnique({
             where: {
                 authId: id
             }
         })
-        if (!response) return res.status(404).json({ message: "user does not exist" })
+        if (!response) {
+            res.status(404).json({ message: "user does not exist" })
+            return
+        }
 
         res.json({ data: response })
     } catch (error) {
@@ -53,14 +57,20 @@ export const updateProfileHanler = async (req: Request, res: Response) => {
 
 export const createJobHanler = async (req: Request, res: Response) => {
     try {
-        const userId = req.user?.userId
+        const userId = (req.user?.userId ?? 0)
         const userData = req.body
         validateJobForm(userData)
         const { title, description, minSalary, maxSalary, tags } = userData
 
+        const checkTitle = await prisma.job.findFirst({ where: { title, companyId: userId } })
+        if (checkTitle) {
+            res.status(409).json({ message: "Title is already exist" })
+            return
+        }
+
         const response = await prisma.job.create({
             data: {
-                companyId: (userId ?? 0),
+                companyId: userId,
                 title,
                 tags,
                 description,
@@ -103,9 +113,15 @@ export const getJobHanler = async (req: Request, res: Response) => {
     try {
         const userId = req.user?.userId
         const { id } = req.params
+        const jobId = parseInt(id)
+        if (isNaN(jobId)) {
+            res.status(400).json({ message: "Invalid user id" });
+            return
+        }
+
         const response = await prisma.job.findUnique({
             where: {
-                id: parseInt(id),
+                id: jobId,
                 companyId: userId
             }, select: {
                 id: true,
@@ -137,17 +153,27 @@ export const updateJobHanler = async (req: Request, res: Response) => {
     try {
         const updateData = req.body
         const { id } = req.params
-
+        const jobId = parseInt(id)
+        if (isNaN(jobId)) {
+            res.status(400).json({ message: "Invalid user id" });
+            return
+        }
+        
         const allowedFields = getAllowedField(updateData)
         const response = await prisma.job.update({
             where: {
-                id: parseInt(id)
+                id: jobId
             }, data: allowedFields
         })
+
         res.status(200).json({ message: "update job success!", newData: response })
     } catch (error) {
         console.log('error update job : ', error)
         if (error instanceof Error) {
+            const errorMsg = error.message
+            if (errorMsg.includes("Record to update not found")) {
+                res.status(404).json({ message: "Record not found" })
+            }
             res.status(500).json({ message: error.message })
         }
     }
@@ -158,19 +184,27 @@ export const deleteJobHanler = async (req: Request, res: Response) => {
         const userId = req.user?.userId
         const { id } = req.params
 
+        const jobId = parseInt(id)
+        if (isNaN(jobId)) {
+            res.status(400).json({ message: "Invalid user id" });
+            return
+        }
+
         const response = await prisma.job.delete({
             where: {
-                id: parseInt(id),
+                id: jobId,
                 companyId: userId
             }
         })
-
-        if (!response) res.status(404).json({ message: "Not found job" })
 
         res.status(200).json({ message: "Delete job success", data: response })
     } catch (error) {
         console.log('error delete job : ', error)
         if (error instanceof Error) {
+            const errorMsg = error.message
+            if (errorMsg.includes("Record to delete does not exist")) {
+                res.status(404).json({ message: "Record not found" })
+            }
             res.status(500).json({ message: error.message })
         }
     }

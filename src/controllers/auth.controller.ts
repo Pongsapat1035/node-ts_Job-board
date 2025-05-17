@@ -13,18 +13,25 @@ export const loginHanler = async (req: Request, res: Response) => {
         const user = await prisma.auth.findUnique({
             where: {
                 email,
+                role
             },
         })
 
-        if (!user) return res.status(404).json({ message: "User is not found" })
+        if (!user) {
+            res.status(404).json({ message: "User is not found" })
+            return
+        }
 
         const hashedPassword = user.password
         const checkPassword = await comparePassword(password, hashedPassword)
 
-        if (!checkPassword)  return res.status(400).json({ message: "Password does not match" })
+        if (!checkPassword) {
+            res.status(400).json({ message: "Password does not match" })
+            return
+        }
         const userId = user.id
         const token = getJwt({ email, role, userId })
-        res.status(200).json({ token })
+        res.status(200).json({ message: "Login success !",  token })
 
     } catch (error) {
         console.log(error)
@@ -42,7 +49,10 @@ export const registerHanler = async (req: Request, res: Response) => {
 
         const user = await prisma.auth.findUnique({ where: { email } })
 
-        if (user) return res.status(409).json({ message: "User is already exist" })
+        if (user) {
+            res.status(409).json({ message: "User is already exist" })
+            return
+        }
         const hashedPassword = await getHashedPassword(password)
 
         const response = await prisma.auth.create({
@@ -71,7 +81,7 @@ export const registerHanler = async (req: Request, res: Response) => {
         }
 
         const token = getJwt({ email, role, userId })
-        res.status(200).json({ token })
+        res.status(200).json({ message: "create new user success",  token })
 
     } catch (error) {
         console.log(error)
