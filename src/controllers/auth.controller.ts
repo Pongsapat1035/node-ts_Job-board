@@ -1,94 +1,38 @@
-import { Request, Response } from "express";
-import { PrismaClient } from "../generated/prisma";
-import { validateRegister } from "../utils/auth.validate";
-import { getJwt } from "../utils/jwt";
-import { getHashedPassword, comparePassword } from "../utils/password";
+import { NextFunction, Request, Response } from "express";
+import { validateRegister } from "../utils/validation/auth.validate";
+import * as authService from '../services/auth.service'
 
-const prisma = new PrismaClient()
-
-export const loginHanler = async (req: Request, res: Response) => {
+export const loginHanler = async (req: Request, res: Response, next: NextFunction) => {
     try {
         const userData = req.body
-        const { email, password, role } = userData
-        const user = await prisma.auth.findUnique({
-            where: {
-                email,
-                role
-            },
-        })
+        const token = await authService.login(userData)
+        res.cookie('token', token, {
+            httpOnly: true,
+            secure: false,
+            sameSite: 'strict',
+            maxAge: 7 * 24 * 60 * 60 * 1000,
+        });
 
-        if (!user) {
-            res.status(404).json({ message: "User is not found" })
-            return
-        }
-
-        const hashedPassword = user.password
-        const checkPassword = await comparePassword(password, hashedPassword)
-
-        if (!checkPassword) {
-            res.status(400).json({ message: "Password does not match" })
-            return
-        }
-        const userId = user.id
-        const token = getJwt({ email, role, userId })
-        res.status(200).json({ message: "Login success !",  token })
-
+        res.status(200).json({ success: true, message: "Login success !" })
     } catch (error) {
-        console.log(error)
-        if (error instanceof Error) {
-            res.status(400).json({ message: error.message })
-        }
+        next(error)
     }
 }
 
-export const registerHanler = async (req: Request, res: Response) => {
+export const registerHanler = async (req: Request, res: Response, next: NextFunction) => {
     try {
-        const userData = req.body
-        validateRegister(userData)
-        const { email, password, name, role } = userData
+        const userData = validateRegister(req.body)
+        const token = await authService.createUser(userData)
 
-        const user = await prisma.auth.findUnique({ where: { email } })
+        res.cookie('token', token, {
+            httpOnly: true,
+            secure: false,
+            sameSite: 'strict',
+            maxAge: 7 * 24 * 60 * 60 * 1000,
+        });
 
-        if (user) {
-            res.status(409).json({ message: "User is already exist" })
-            return
-        }
-        const hashedPassword = await getHashedPassword(password)
-
-        const response = await prisma.auth.create({
-            data: {
-                email,
-                password: hashedPassword,
-                role
-            }
-        })
-
-        const userId = response.id
-        if (role === 'user') {
-            await prisma.user.create({
-                data: {
-                    authId: userId,
-                    name
-                }
-            })
-        } else if (role === 'company') {
-            await prisma.company.create({
-                data: {
-                    authId: userId,
-                    name
-                }
-            })
-        }
-
-        const token = getJwt({ email, role, userId })
-        res.status(200).json({ message: "create new user success",  token })
-
+        res.status(200).json({ success: true, message: "create new user success" })
     } catch (error) {
-        console.log(error)
-        if (error instanceof Error) {
-            const errorMsg = error.message
-            const code = errorMsg.includes('input error') ? 400 : 500
-            res.status(code).json({ error: error.message })
-        }
+        next(error)
     }
 }

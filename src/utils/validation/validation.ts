@@ -1,5 +1,6 @@
 import { z } from "zod"
-import { Role } from "../types"
+import { Role } from "../../types"
+import { AppError } from "../errors/appError"
 
 export const validateEmail = (email: string): string | null => {
     const emailFormat = z.string({ message: "email in in correct" })
@@ -51,13 +52,18 @@ export const validaetNumber = (number: string): string | null => {
     return null
 }
 
-export const validateRole = (role:string): string | null => {
+export const validateRole = (role: string): string | null => {
     const roleFormat = z.nativeEnum(Role)
     const result = roleFormat.safeParse(role)
 
-     if (!result.success) {
+    if (!result.success) {
         const errMsg = result.error.issues[0].message
         return errMsg
     }
     return null
+}
+
+export const validateField = (validator: (value: any) => string | null, value: any, fieldName: string) => {
+    const errorMsg = validator(value)
+    if (errorMsg) throw new AppError(`${fieldName}: ${errorMsg}`, 400)
 }

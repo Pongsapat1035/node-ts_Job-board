@@ -1,6 +1,15 @@
 import express from 'express'
-import { addBookmarkHanler, createApplicantHanler, deleteAplicantHanler, getAllApplicantsHanler, getAllJobsHanler, getApplicantHanler, getBookmarkListHanler, getJobHanler, removeBookmarkHanler } from '../controllers/user.controller'
-// import userController from '../controllers/user.controller';
+import {
+    addBookmarkHanler,
+    createApplicantHanler,
+    deleteAplicantHanler,
+    getAllApplicantsHanler,
+    getAllJobsHanler,
+    getApplicantHanler,
+    getBookmarkListHanler,
+    getJobHanler,
+    removeBookmarkHanler
+} from '../controllers/user.controller'
 
 const router = express.Router()
 

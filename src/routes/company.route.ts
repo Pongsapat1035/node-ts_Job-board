@@ -1,5 +1,13 @@
 import express from 'express'
-import { getProfileHanler, updateProfileHanler, createJobHanler, getAllJobsHanler, getJobHanler, deleteJobHanler, updateJobHanler } from '../controllers/company.controller'
+import {
+    getProfileHanler,
+    updateProfileHanler,
+    createJobHanler,
+    getAllJobsHanler,
+    getJobHanler,
+    deleteJobHanler,
+    updateJobHanler
+} from '../controllers/company.controller'
 
 const router = express.Router()
 

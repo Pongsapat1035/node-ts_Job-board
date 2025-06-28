@@ -1,6 +1,5 @@
 generator client {
   provider = "prisma-client-js"
-  output   = "../src/generated/prisma"
 }
 
 datasource db {
@@ -9,30 +8,30 @@ datasource db {
 }
 
 model Auth {
-  id Int @id @default(autoincrement())
-  email String @unique
-  password String
-  createAt DateTime @default(now())
-  role Role
-  user User?
-  company Company?
-  Job Job[]
-  bookmark Bookmark[]
+  id        Int         @id @default(autoincrement())
+  email     String      @unique
+  password  String
+  createAt  DateTime    @default(now())
+  role      Role
+  user      User?
+  company   Company?
+  Job       Job[]
+  bookmark  Bookmark[]
   applicant Applicant[]
 }
 
 model User {
-  id  Int @id @default(autoincrement())
-  auth Auth @relation(fields: [authId], references: [id])
-  authId Int @unique
-  name String
+  id     Int    @id @default(autoincrement())
+  auth   Auth   @relation(fields: [authId], references: [id], onDelete: Cascade)
+  authId Int    @unique
+  name   String
 }
 
 model Company {
-  id  Int @id @default(autoincrement())
-  auth Auth @relation(fields: [authId], references: [id])
-  authId Int @unique
-  name String
+  id          Int     @id @default(autoincrement())
+  auth        Auth    @relation(fields: [authId], references: [id], onDelete: Cascade)
+  authId      Int     @unique
+  name        String
   description String?
 }
 
@@ -43,34 +42,34 @@ enum Role {
 }
 
 model Job {
-  id Int @id @default(autoincrement())
-  company Auth @relation(fields: [companyId], references: [id])
-  companyId Int 
-  title String
+  id          Int         @id @default(autoincrement())
+  company     Auth        @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  companyId   Int
+  title       String
   description String
-  minSalary Int 
-  maxSalary Int 
-  status Boolean
-  createAt DateTime @default(now())
-  tags String
-  applicant Applicant[]
-  bookmark Bookmark[]
+  minSalary   Int
+  maxSalary   Int
+  status      Boolean
+  createAt    DateTime    @default(now())
+  tags        String
+  applicant   Applicant[]
+  bookmark    Bookmark[]
 }
 
 model Applicant {
-  id Int @id @default(autoincrement())
-  job Job @relation(fields: [jobId], references: [id])
-  jobId Int  
-  user Auth @relation(fields: [userId], references: [id])
-  userId Int 
-  title String
+  id          Int    @id @default(autoincrement())
+  job         Job    @relation(fields: [jobId], references: [id], onDelete: Cascade)
+  jobId       Int
+  user        Auth   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId      Int
+  title       String
   description String
 }
 
 model Bookmark {
-  id Int @id @default(autoincrement())
-  job Job @relation(fields: [jobId], references: [id])
-  jobId Int  
-  user Auth @relation(fields: [userId], references: [id])
-  userId Int 
+  id     Int  @id @default(autoincrement())
+  job    Job  @relation(fields: [jobId], references: [id], onDelete: Cascade)
+  jobId  Int
+  user   Auth @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId Int
 }
